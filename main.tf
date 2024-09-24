@@ -1,20 +1,21 @@
 resource "aws_instance" "mi_instancia" {
-  for_each      = { for idx, coche in var.lista_de_objetos : idx => coche }
-  ami           = var.ami
-  instance_type = each.value.motor  # Usamos el valor del atributo 'motor'
+  for_each = { for idx, instance in var.moduleconfig.instance : idx => instance }
+
+  ami           = each.value.ami
+  instance_type = each.value.instance_type
 
   tags = {
-    "Nombre" = "Servidor de Prueba"
-    "Llanta" = each.value.llanta  # Usamos el valor del atributo 'llanta'
+    for tag in each.value.tags : tag => tag
   }
 }
 
 resource "aws_s3_bucket" "mi_bucket" {
-  for_each = { for idx, coche in var.lista_de_objetos : idx => coche }
-  bucket   = "mi-bucket-${each.key}"  # Usamos la clave 'each.key' para hacer el nombre único
-  acl      = "private"
+  for_each = { for idx, bucket in var.moduleconfig.bucket : idx => bucket }
+
+  bucket = each.value.name
+  acl    = each.value.acl
 
   tags = {
-    "Llanta" = each.value.llanta  # Usamos el valor del atributo 'llanta'
+    for tag in each.value.tags : tag => tag
   }
 }
