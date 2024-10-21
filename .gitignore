@@ -3,7 +3,7 @@
 *.tfstate.*
 
 # Archivos de variables sensibles (pueden contener credenciales)
-*.tfvars
+
 
 # Archivos de caché
 .terraform/
