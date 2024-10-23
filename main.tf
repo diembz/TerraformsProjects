@@ -8,7 +8,3 @@ module "aws-vpc" {
   source    = "./modules/aws-vpc"
   vpcconfig = var.vpcconfig
 }
-
-
-
-
