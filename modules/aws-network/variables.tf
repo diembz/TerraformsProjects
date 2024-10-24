@@ -70,8 +70,9 @@ variable "vpcconfig" {
 
     }))
 
-    #Aws nat-gateway
+    # Nat_gateway
     aws_nat_gateway = list(object({
+      nat_gtw_name = string
       allocation_id                      = string
       connectivity_type                  = string
       private_ip                         = string
@@ -79,15 +80,19 @@ variable "vpcconfig" {
       secondary_allocation_ids           = string
       secondary_private_ip_address_count = string
       secondary_private_ip_addresses     = string
+      tags = map(string)
     }))
 
-    #Internet_gateway
+    # Internet_gateway
     aws_internet_gateway = list(object({
+      internet_gtw_name =  string
       vpc_id = string
+      tags = map(string)
     }))
 
-    #customer_gateway
+    # customer_gateway
     aws_customer_gateway = list(object({
+      customer_gtw_name = string
       type             = string
       bgp_asn          = string
       bgp_asn_extended = string
@@ -97,7 +102,25 @@ variable "vpcconfig" {
       tags             = map(string)
     }))
 
+    # transit gateway
+    aws_transit_gateway = list(object({
+      transit_gtw_name = string
+      description                     = string
+      amazon_side_asn                 = number
+      auto_accept_shared_attachments  = bool
+      default_route_table_association = bool
+      default_route_table_propagation = bool
+      dns_support = bool
+      security_group_referencing_support = bool
+      multicast_support = bool
+      transit_gateway_cidr_blocks = string
+      vpn_ecmp_support = bool
+      tags = map(string)
+    }))
+
+    #vpn connection
     aws_vpn_connection = list(object({
+      vpn_connection_name = string
       customer_gateway_id                     = string
       type                                    = string
       transit_gateway_id                      = string
