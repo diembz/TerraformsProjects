@@ -79,145 +79,167 @@ resource "aws_route_table_association" "mi_route_table_assoc" { # # Asocia cada 
 }
 
 resource "aws_nat_gateway" "die_nat_gateway" {
-  for_each = { for entry in var.vpcconfig.aws_nat_gateway : entry.nat_gtw_name => entry }
-  allocation_id                      = each.value.routes.allocation_id
-  connectivity_type                  = each.value.routes.connectivity_type
-  private_ip                         = each.value.routes.private_ip
-  subnet_id                          = each.value.routes.subnet_id
-  secondary_allocation_ids           = each.value.routes.secondary_allocation_ids
-  secondary_private_ip_address_count = each.value.routes.secondary_private_ip_address_count
-  secondary_private_ip_addresses     = each.value.routes.secondary_private_ip_addresses
-  tags = each.value.tags
+  for_each                           = { for entry in var.vpcconfig.aws_nat_gateway : entry.nat_gtw_name => entry }
+  allocation_id                      = each.value.allocation_id
+  connectivity_type                  = each.value.connectivity_type
+  private_ip                         = each.value.private_ip
+  subnet_id                          = each.value.subnet_id
+  secondary_allocation_ids           = each.value.secondary_allocation_ids
+  secondary_private_ip_address_count = each.value.secondary_private_ip_address_count
+  secondary_private_ip_addresses     = each.value.secondary_private_ip_addresses
+  tags                               = each.value.tags
 }
 
+# Internet Gateway
 resource "aws_internet_gateway" "die_internet_gateway" {
   for_each = { for entry in var.vpcconfig.aws_internet_gateway : entry.inernet_gtw_name => entry }
-  vpc_id = aws_vpc.mi_die_vpc[each.value.vpc_name].id #INVESTIGAR
-  tags = each.value.tags
+  vpc_id   = aws_vpc.mi_die_vpc[each.value.vpc_name].id #INVESTIGAR
+  tags     = each.value.tags
+  id       = each.value.id
+  arn      = each.value.arn
+  owner_id = each.value.owner_id
 }
 
+# Customer Gateway
 resource "aws_customer_gateway" "die_customer_gateway" {
-  for_each = { for entry in var.vpcconfig.aws_customer_gateway : entry.customer_gtw_name => entry }
-  type             = each.value.routes.type
-  bgp_asn          = each.value.routes.bgp_asn
-  bgp_asn_extended = each.value.routes.bgp_asn_extended
-  certificate_arn  = each.value.routes.certificate_arn
-  device_name      = each.value.routes.device_name
-  ip_address       = each.value.routes.ip_address
-  tags = each.value.tags
+  for_each         = { for entry in var.vpcconfig.aws_customer_gateway : entry.customer_gtw_name => entry }
+  type             = each.value.type
+  bgp_asn          = each.value.bgp_asn
+  bgp_asn_extended = each.value.bgp_asn_extended
+  certificate_arn  = each.value.certificate_arn
+  device_name      = each.value.device_name
+  ip_address       = each.value.ip_address
+  tags             = each.value.tags
 }
 
 # transit gateway
 resource "aws_ec2_transit_gateway" "die_ec2_transit_gateway" {
-  for_each = { for entry in var.vpcconfig.aws_transit_gateway : entry.transit_gtw_name => entry }
-  description                     = each.value.routes.description
-  amazon_side_asn                 = each.value.routes.amazon_side_asn
-  auto_accept_shared_attachments  = each.value.routes.auto_accept_shared_attachments
-  default_route_table_association = each.value.routes.default_route_table_association
-  default_route_table_propagation = each.value.routes.default_route_table_propagation
-  dns_support = each.value.routes.dns_support
-  security_group_referencing_support = each.value.routes.security_group_referencing_support
-  multicast_support = each.value.routes.multicast_support
-  transit_gateway_cidr_blocks = each.value.routes.transit_gateway_cidr_blocks
-  vpn_ecmp_support = each.value.routes.vpn_ecmp_support
-  tags = each.value.tags
+  for_each                           = { for entry in var.vpcconfig.aws_transit_gateway : entry.transit_gtw_name => entry }
+  description                        = each.value.description
+  amazon_side_asn                    = each.value.amazon_side_asn
+  auto_accept_shared_attachments     = each.value.auto_accept_shared_attachments
+  default_route_table_association    = each.value.default_route_table_association
+  default_route_table_propagation    = each.value.default_route_table_propagation
+  dns_support                        = each.value.dns_support
+  security_group_referencing_support = each.value.security_group_referencing_support
+  multicast_support                  = each.value.multicast_support
+  transit_gateway_cidr_blocks        = each.value.transit_gateway_cidr_blocks
+  vpn_ecmp_support                   = each.value.vpn_ecmp_support
+  tags                               = each.value.tags
+}
+
+# Network Firewall
+resource "aws_networkfirewall_firewall" "die_networkfirewall_firewall" {
+  for_each          = { for entry in var.vpcconfig.aws_networkfirewall_firewall : entry.networkfirewall_name => entry }
+  delete_protection = each.value.delete_protection
+  description       = each.value.description
+  encryption_configuration {
+    type   = each.value.type
+    key_id = each.value.key_id
+  }
+  firewall_policy_arn               = each.value.firewall_policy_arn
+  firewall_policy_change_protection = each.value.firewall_policy_change_protection
+  name                              = each.value.name
+  subnet_change_protection          = each.value.subnet_change_protection
+  subnet_mapping {
+    subnet_id       = each.value.subnet_id
+    ip_address_type = each.value.subent_id
+  }
+  vpc_id = each.value.vpc_id
+  tags   = each.value.tags
 }
 
 # VPN CONNECTION
 resource "aws_vpn_connection" "die_vpn_connection" {
-  for_each = { for entry in var.vpcconfig.aws_vpn_connection : entry.vpn_connection_name => entry }
-  customer_gateway_id                     = each.value.routes.customer_gateway_id
-  type                                    = each.value.routes.type
-  transit_gateway_id                      = each.value.routes.transit_gateway_id
-  vpn_gateway_id                          = each.value.routes.vpn_gateway_id
-  static_routes_only                      = each.value.routes.st
-  enable_acceleration                     = each.value.routes.enable_acceleration
-  local_ipv4_network_cidr                 = each.value.routes.local_ipv4_network_cidr
-  local_ipv6_network_cidr                 = each.value.routes.local_ipv6_network_cidr
-  outside_ip_address_type                 = each.value.routes.outside_ip_address_type
-  remote_ipv4_network_cidr                = each.value.routes.remote_ipv4_network_cidr
-  remote_ipv6_network_cidr                = each.value.routes.remote_ipv6_network_cidr
-  transport_transit_gateway_attachment_id = each.value.routes.transport_transit_gateway_attachment_id
-  tunnel_inside_ip_version                = each.value.routes.tunnel_inside_ip_version
-  tunnel1_inside_cidr                     = each.value.routes.tunnel1_inside_cidr
-  tunnel2_inside_cidr                     = each.value.routes.tunnel2_inside_cidr
-  tunnel1_inside_ipv6_cidr                = each.value.routes.tunnel1_inside_ipv6_cidr
-  tunnel2_inside_ipv6_cidr                = each.value.routes.tunnel2_inside_ipv6_cidr
-  tunnel1_preshared_key                   = each.value.routes.tunnel1_preshared_key
-  tunnel2_preshared_key                   = each.value.routes.tunnel1_preshared_key
-  tunnel1_dpd_timeout_action              = each.value.routes.tunnel1_dpd_timeout_action
-  tunnel2_dpd_timeout_action              = each.value.routes.tunnel2_dpd_timeout_action
-  tunnel1_dpd_timeout_seconds             = each.value.routes.tunnel1_dpd_timeout_seconds
-  tunnel2_dpd_timeout_seconds             = each.value.routes.tunnel2_dpd_timeout_seconds
-  tunnel1_enable_tunnel_lifecycle_control = each.value.routes.tunnel1_enable_tunnel_lifecycle_control
-  tunnel2_enable_tunnel_lifecycle_control = each.value.routes.tunnel2_enable_tunnel_lifecycle_control
-  tunnel1_ike_versions                    = each.value.routes.tunnel1_ike_versions
-  tunnel2_ike_versions                    = each.value.routes.tunnel2_ike_versions
-  tunnel1_log_options = each.value.routes.tunnel1_log_options
-  tunnel2_log_options = each.value.routes.tunnel2_log_options
-  tunnel1_phase1_dh_group_numbers      = each.value.routes.tunnel1_phase1_dh_group_numbers
-  tunnel2_phase1_dh_group_numbers      = each.value.routes.tunnel2_phase1_dh_group_numbers
-  tunnel1_phase1_encryption_algorithms = each.value.tunnel1_phase1_dh_group_numbersroutes.tunnel1_phase1_encryption_algorithms
-  tunnel2_phase1_encryption_algorithms = each.value.routes.tunnel2_phase1_encryption_algorithms
-  tunnel1_phase1_integrity_algorithms  = each.value.routes.tunnel1_phase1_integrity_algorithms
-  tunnel2_phase1_integrity_algorithms  = each.value.routes.tunnel2_phase1_integrity_algorithms
-  tunnel1_phase1_lifetime_seconds      = each.value.routes.tunnel1_phase1_lifetime_seconds
-  tunnel2_phase1_lifetime_seconds      = each.value.routes.tunnel2_phase1_lifetime_seconds
-  tunnel1_phase2_dh_group_numbers      = each.value.routes.tunnel1_phase2_dh_group_numbers
-  tunnel2_phase2_dh_group_numbers      = each.value.routes.tunnel2_phase2_dh_group_numbers
-  tunnel1_phase2_encryption_algorithms = each.value.routes.tunnel1_phase2_encryption_algorithms
-  tunnel2_phase2_encryption_algorithms = each.value.routes.tunnel2_phase1_encryption_algorithms
-  tunnel1_phase2_integrity_algorithms  = each.value.routes.tunnel1_phase2_integrity_algorithms
-  tunnel2_phase2_integrity_algorithms  = each.value.routes.tunnel2_phase2_integrity_algorithms
-  tunnel1_phase2_lifetime_seconds      = each.value.routes.tunnel1_phase2_lifetime_seconds
-  tunnel2_phase2_lifetime_seconds      = each.value.routes.tunnel2_phase2_lifetime_seconds
-  tunnel1_rekey_fuzz_percentage        = each.value.routes.tunnel1_rekey_fuzz_percentage
-  tunnel2_rekey_fuzz_percentage        = each.value.routes.tunnel2_rekey_fuzz_percentage
-  tunnel1_rekey_margin_time_seconds    = each.value.routes.tunnel1_rekey_margin_time_seconds
-  tunnel2_rekey_margin_time_seconds    = each.value.routes.tunnel2_rekey_margin_time_seconds
-  tunnel1_replay_window_size           = each.value.routes.tunnel1_replay_window_size
-  tunnel2_replay_window_size           = each.value.routes.tunnel2_replay_window_size
-  tunnel1_startup_action               = each.value.routes.tunnel1_startup_action
-  tunnel2_startup_action               = each.value.routes.tunnel2_startup_action
-  tags = each.value.tags
+  for_each                                = { for entry in var.vpcconfig.aws_vpn_connection : entry.vpn_connection_name => entry }
+  customer_gateway_id                     = each.value.customer_gateway_id
+  type                                    = each.value.type
+  transit_gateway_id                      = each.value.transit_gateway_id
+  vpn_gateway_id                          = each.value.vpn_gateway_id
+  static_routes_only                      = each.value.static_routes_only
+  enable_acceleration                     = each.value.enable_acceleration
+  local_ipv4_network_cidr                 = each.value.local_ipv4_network_cidr
+  local_ipv6_network_cidr                 = each.value.local_ipv6_network_cidr
+  outside_ip_address_type                 = each.value.outside_ip_address_type
+  remote_ipv4_network_cidr                = each.value.remote_ipv4_network_cidr
+  remote_ipv6_network_cidr                = each.value.remote_ipv6_network_cidr
+  transport_transit_gateway_attachment_id = each.value.transport_transit_gateway_attachment_id
+  tunnel_inside_ip_version                = each.value.tunnel_inside_ip_version
+  tunnel1_inside_cidr                     = each.value.tunnel1_inside_cidr
+  tunnel2_inside_cidr                     = each.value.tunnel2_inside_cidr
+  tunnel1_inside_ipv6_cidr                = each.value.tunnel1_inside_ipv6_cidr
+  tunnel2_inside_ipv6_cidr                = each.value.tunnel2_inside_ipv6_cidr
+  tunnel1_preshared_key                   = each.value.tunnel1_preshared_key
+  tunnel2_preshared_key                   = each.value.tunnel1_preshared_key
+  tunnel1_dpd_timeout_action              = each.value.tunnel1_dpd_timeout_action
+  tunnel2_dpd_timeout_action              = each.value.tunnel2_dpd_timeout_action
+  tunnel1_dpd_timeout_seconds             = each.value.tunnel1_dpd_timeout_seconds
+  tunnel2_dpd_timeout_seconds             = each.value.tunnel2_dpd_timeout_seconds
+  tunnel1_enable_tunnel_lifecycle_control = each.value.tunnel1_enable_tunnel_lifecycle_control
+  tunnel2_enable_tunnel_lifecycle_control = each.value.tunnel2_enable_tunnel_lifecycle_control
+  tunnel1_ike_versions                    = each.value.tunnel1_ike_versions
+  tunnel2_ike_versions                    = each.value.tunnel2_ike_versions
+  tunnel1_log_options {
+    cloudwatch_log_options {
+      log_enabled       = each.value.log_enabled_1
+      log_group_arn     = each.value.log_group_arn_1
+      log_output_format = each.value.log_output_format_1
+    }
+  }
+  tunnel2_log_options {
+    cloudwatch_log_options {
+      log_enabled       = each.value.log_enabled_2
+      log_group_arn     = each.value.log_group_arn_2
+      log_output_format = each.value.log_output_format_2
+    }
+  }
+  tunnel1_phase1_dh_group_numbers      = each.value.tunnel1_phase1_dh_group_numbers
+  tunnel2_phase1_dh_group_numbers      = each.value.tunnel2_phase1_dh_group_numbers
+  tunnel1_phase1_encryption_algorithms = each.value.tunnel1_phase1_encryption_algorithms
+  tunnel2_phase1_encryption_algorithms = each.value.tunnel2_phase1_encryption_algorithms
+  tunnel1_phase1_integrity_algorithms  = each.value.tunnel1_phase1_integrity_algorithms
+  tunnel2_phase1_integrity_algorithms  = each.value.tunnel2_phase1_integrity_algorithms
+  tunnel1_phase1_lifetime_seconds      = each.value.tunnel1_phase1_lifetime_seconds
+  tunnel2_phase1_lifetime_seconds      = each.value.tunnel2_phase1_lifetime_seconds
+  tunnel1_phase2_dh_group_numbers      = each.value.tunnel1_phase2_dh_group_numbers
+  tunnel2_phase2_dh_group_numbers      = each.value.tunnel2_phase2_dh_group_numbers
+  tunnel1_phase2_encryption_algorithms = each.value.tunnel1_phase2_encryption_algorithms
+  tunnel2_phase2_encryption_algorithms = each.value.tunnel2_phase1_encryption_algorithms
+  tunnel1_phase2_integrity_algorithms  = each.value.tunnel1_phase2_integrity_algorithms
+  tunnel2_phase2_integrity_algorithms  = each.value.tunnel2_phase2_integrity_algorithms
+  tunnel1_phase2_lifetime_seconds      = each.value.tunnel1_phase2_lifetime_seconds
+  tunnel2_phase2_lifetime_seconds      = each.value.tunnel2_phase2_lifetime_seconds
+  tunnel1_rekey_fuzz_percentage        = each.value.tunnel1_rekey_fuzz_percentage
+  tunnel2_rekey_fuzz_percentage        = each.value.tunnel2_rekey_fuzz_percentage
+  tunnel1_rekey_margin_time_seconds    = each.value.tunnel1_rekey_margin_time_seconds
+  tunnel2_rekey_margin_time_seconds    = each.value.tunnel2_rekey_margin_time_seconds
+  tunnel1_replay_window_size           = each.value.tunnel1_replay_window_size
+  tunnel2_replay_window_size           = each.value.tunnel2_replay_window_size
+  tunnel1_startup_action               = each.value.tunnel1_startup_action
+  tunnel2_startup_action               = each.value.tunnel2_startup_action
+  tags                                 = each.value.tags
 }
+
 
 resource "aws_security_group" "security_group_example" {
-  description = ""
-  egress      = ""
-  ingress     = ""
-  name_prefix = ""
-  name        = ""
-  vpc_id      = ""
-  tags = {
-
-  }
+  for_each               = { for entry in var.vpcconfig.aws_security_group : entry.security_group_name => entry }
+  description            = each.value.description
+  egress                 = each.value.egress
+  ingress                = each.value.ingress
+  name_prefix            = each.value.name_prefix
+  revoke_rules_on_delete = each.value.revoke_rules_on_delete
+  name                   = each.value.name
+  vpc_id                 = each.value.vpc_id
+  tags                   = each.value.tags
 }
 
-resource "aws_vpc_security_group_ingress_rule" "allow_tls_ipv4" {
-  security_group_id = ""
-  cidr_ipv4         = ""
-  from_port         = ""
-  ip_protocol       = ""
-  to_port           = ""
-}
+# ACL
 
-resource "aws_vpc_security_group_ingress_rule" "allow_tls_ipv6" {
-  security_group_id = ""
-  cidr_ipv6         = ""
-  from_port         = ""
-  ip_protocol       = ""
-  to_port           = ""
-}
-
-resource "aws_vpc_security_group_egress_rule" "allow_all_traffic_ipv4" {
-  security_group_id = ""
-  cidr_ipv4         = ""
-  ip_protocol       = ""
-}
-
-resource "aws_vpc_security_group_egress_rule" "allow_all_traffic_ipv6" {
-  security_group_id = ""
-  cidr_ipv6         = ""
-  ip_protocol       = ""
+resource "aws_network_acl" "die_network_acl" {
+  for_each   = { for entry in var.vpcconfig.aws_network_acl : entry.network_acl_name => entry }
+  vpc_id     = each.value.vpc_id
+  subnet_ids = each.value.subnet_ids
+  ingress    = each.value.ingress
+  egress     = each.value.egress
+  tags       = each.value.tags
 }

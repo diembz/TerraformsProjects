@@ -72,7 +72,7 @@ variable "vpcconfig" {
 
     # Nat_gateway
     aws_nat_gateway = list(object({
-      nat_gtw_name = string
+      nat_gtw_name                       = string
       allocation_id                      = string
       connectivity_type                  = string
       private_ip                         = string
@@ -80,47 +80,65 @@ variable "vpcconfig" {
       secondary_allocation_ids           = string
       secondary_private_ip_address_count = string
       secondary_private_ip_addresses     = string
-      tags = map(string)
+      tags                               = map(string)
     }))
 
     # Internet_gateway
     aws_internet_gateway = list(object({
-      internet_gtw_name =  string
-      vpc_id = string
-      tags = map(string)
+      internet_gtw_name = string
+      id                = string
+      arn               = string
+      owner_id          = string
+      vpc_id            = string
+      tags              = map(string)
     }))
 
     # customer_gateway
     aws_customer_gateway = list(object({
       customer_gtw_name = string
-      type             = string
-      bgp_asn          = string
-      bgp_asn_extended = string
-      certificate_arn  = string
-      device_name      = string
-      ip_address       = string
-      tags             = map(string)
+      type              = string
+      bgp_asn           = string
+      bgp_asn_extended  = string
+      certificate_arn   = string
+      device_name       = string
+      ip_address        = string
+      tags              = map(string)
     }))
 
     # transit gateway
     aws_transit_gateway = list(object({
-      transit_gtw_name = string
-      description                     = string
-      amazon_side_asn                 = number
-      auto_accept_shared_attachments  = bool
-      default_route_table_association = bool
-      default_route_table_propagation = bool
-      dns_support = bool
+      transit_gtw_name                   = string
+      description                        = string
+      amazon_side_asn                    = number
+      auto_accept_shared_attachments     = bool
+      default_route_table_association    = bool
+      default_route_table_propagation    = bool
+      dns_support                        = bool
       security_group_referencing_support = bool
-      multicast_support = bool
-      transit_gateway_cidr_blocks = string
-      vpn_ecmp_support = bool
-      tags = map(string)
+      multicast_support                  = bool
+      transit_gateway_cidr_blocks        = string
+      vpn_ecmp_support                   = bool
+      tags                               = map(string)
     }))
 
-    #vpn connection
+    # Network Firewall
+    aws_networkfirewall_firewall = list(object({
+      networkfirewall_name              = string
+      delete_protection                 = bool
+      description                       = string
+      encryption_configuration          = map(any)
+      firewall_policy_arn               = string
+      firewall_policy_change_protection = bool
+      name                              = string
+      subnet_change_protection          = bool
+      subnet_mapping                    = map(any)
+      vpc_id                            = string
+      tags                              = map(any)
+    }))
+
+    # VPN connection
     aws_vpn_connection = list(object({
-      vpn_connection_name = string
+      vpn_connection_name                     = string
       customer_gateway_id                     = string
       type                                    = string
       transit_gateway_id                      = string
@@ -148,8 +166,13 @@ variable "vpcconfig" {
       tunnel2_enable_tunnel_lifecycle_control = bool
       tunnel1_ike_versions                    = list(string)
       tunnel2_ike_versions                    = list(string)
-      tunnel1_log_options                     = map(string)
-      tunnel2_log_options                     = map(string)
+      log_enabled_1                           = bool
+      log_group_arn_1                         = string
+      log_output_format_1                     = string
+      log_enabled_2                           = bool
+      log_group_arn_2                         = string
+      log_output_format_2                     = string
+      tunnel2_log_options                     = map(any)
       tunnel1_phase1_dh_group_numbers         = list(number)
       tunnel2_phase1_dh_group_numbers         = list(number)
       tunnel1_phase1_encryption_algorithms    = list(string)
@@ -176,54 +199,28 @@ variable "vpcconfig" {
       tunnel2_startup_action                  = string
     }))
 
+    # Security Group
     aws_security_group = list(object({
-      description = string
-      egress = list(object({
-        cidr_block       = list(string)
-        from_port        = number
-        to_port          = number
-        protocol         = string
-        ipv6_cidr_blocks = list(string)
-      }))
-      ingress = list(object({
-        cidr_block       = list(string)
-        from_port        = number
-        to_port          = number
-        protocol         = string
-        ipv6_cidr_blocks = list(string)
-      }))
-      name_prefix = string
-      vpc_id      = string
-      tags        = map(string)
+      description         = string
+      name_prefix         = string
+      security_group_name = string
+      egress              = map(any)
+      ingress             = map(any)
+      vpc_id              = string
+      tags                = map(string)
     }))
 
-    aws_vpc_security_group_ingress_rule = list(object({
-      security_group_id = string
-      cidr_ipv4         = string
-      from_port         = number
-      ip_protocol       = string
-      to_port           = number
+    # ACL
+    aws_network_acl = list(object({
+      network_acl_name = string
+      vpc_id           = string
+      subnet_ids       = string
+      ingress          = string
+      tags             = map(string)
+      egress           = map(any)
+      ingress          = map(any)
     }))
 
-    aws_vpc_security_group_ingress_rule = list(object({
-      security_group_id = string
-      cidr_ipv6         = string
-      from_port         = number
-      ip_protocol       = string
-      to_port           = number
-    }))
-
-    aws_vpc_security_group_egress_rule = list(object({
-      security_group_id = string
-      cidr_ipv4         = string
-      ip_protocol       = string
-    }))
-
-    aws_vpc_security_group_egress_rule = list(object({
-      security_group_id = string
-      cidr_ipv6         = string
-      ip_protocol       = string
-    }))
   })
 }
 
