@@ -61,8 +61,9 @@ variable "vpcconfig" {
     route_tables = list(object({
       route_table_name = string
       propagating_vgws = list(string)
+      vpc_name                   = string
+      tags                       = map(string)
       routes = list(object({
-        vpc_name                   = string
         cidr_block                 = string
         ipv6_cidr_block            = string
         destination_prefix_list_id = string
@@ -76,7 +77,6 @@ variable "vpcconfig" {
         transit_gateway_id         = string
         vpc_endpoint_id            = string
         vpc_peering_connection_id  = string
-        tags                       = map(string)
       }))
     }))
 
@@ -84,7 +84,7 @@ variable "vpcconfig" {
     table_association = list(object({
       association_name = string
       subnet_name      = string
-      routetable_name  = string
+      route_table_name  = string
 
     }))
 
@@ -95,15 +95,16 @@ variable "vpcconfig" {
       connectivity_type                  = string
       private_ip                         = string
       subnet_id                          = string
-      secondary_allocation_ids           = string
+      secondary_allocation_ids           = list(string)
       secondary_private_ip_address_count = string
-      secondary_private_ip_addresses     = string
+      secondary_private_ip_addresses     = list(string)
       tags                               = map(string)
     }))
 
     # Internet_gateway
     aws_internet_gateway = list(object({
       internet_gtw_name = string
+      vpc_name = string
       tags              = map(string)
     }))
 
@@ -124,14 +125,14 @@ variable "vpcconfig" {
       transit_gtw_name                   = string
       description                        = string
       amazon_side_asn                    = number
-      auto_accept_shared_attachments     = bool
-      default_route_table_association    = bool
-      default_route_table_propagation    = bool
-      dns_support                        = bool
-      security_group_referencing_support = bool
-      multicast_support                  = bool
-      transit_gateway_cidr_blocks        = string
-      vpn_ecmp_support                   = bool
+      auto_accept_shared_attachments     = string
+      default_route_table_association    = string
+      default_route_table_propagation    = string
+      dns_support                        = string
+      security_group_referencing_support = string
+      multicast_support                  = string
+      transit_gateway_cidr_blocks        = list(string)
+      vpn_ecmp_support                   = string
       tags                               = map(string)
     }))
 
@@ -226,22 +227,22 @@ variable "vpcconfig" {
       security_group_name    = string
       revoke_rules_on_delete = bool
       egress = list(object({
-        cidr_blocks      = string
+        cidr_blocks      = list(string)
         from_port        = number
         to_port          = number
         protocol         = string
-        ipv6_cidr_blocks = string
+        ipv6_cidr_blocks = list(string)
         description      = string
         prefix_list_ids  = list(string)
         security_groups  = list(string)
         self             = bool
       }))
       ingress = list(object({
-        cidr_blocks      = string
+        cidr_blocks      = list(string)
         from_port        = number
         to_port          = number
         protocol         = string
-        ipv6_cidr_blocks = string
+        ipv6_cidr_blocks = list(string)
         description      = string
         prefix_list_ids  = list(string)
         security_groups  = list(string)
@@ -275,6 +276,9 @@ variable "vpcconfig" {
         protocol         = string
         action           = string
         ipv6_cidr_blocks = list(string)
+        icmp_type        = number
+        icmp_code        = number
+        rule_no          = number
       }))
       tags = map(string)
     }))

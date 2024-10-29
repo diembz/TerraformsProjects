@@ -1,8 +1,10 @@
-output "vpc_id" {
-  value = aws_vpc.mi_die_vpc[*].id
+output "vpc_ids" {
+  value = { for name, vpc in aws_vpc.mi_die_vpc : name => vpc.id }
 }
 
+
 output "subnet_ids" {
-  value = aws_subnet.mi_die_subnet[*].id
+  value = { for name, subnet in aws_subnet.mi_die_subnet : name => subnet.id }
 }
+
 

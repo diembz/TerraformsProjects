@@ -26,7 +26,7 @@ vpcconfig = {
     {
       association_name = "public-association"
       subnet_name      = "subnet-publica"
-      routetable_name  = "public-route-table"
+      route_table_name  = "public-route-table"
     }
   ]
 
@@ -38,7 +38,7 @@ vpcconfig = {
       subnet_name                                    = "subnet-publica"
       availability_zone                              = "us-east-1a"
       assign_ipv6_address_on_creation                = false
-      customer_owned_ipv4_pool                       = null
+      customer_owned_ipv4_pool                       = ""
       enable_dns64                                   = false
       enable_lni_at_device_index                     = null
       enable_resource_name_dns_aaaa_record_on_launch = false
@@ -47,7 +47,7 @@ vpcconfig = {
       ipv6_native                                    = false
       map_customer_owned_ip_on_launch                = false
       map_public_ip_on_launch                        = true
-      outpost_arn                                    = null
+      outpost_arn                                    = ""
       private_dns_hostname_type_on_launch            = "ip-name"
       cidr_block                                     = "10.0.1.0/24"
       tags                                           = { "Name" = "subnet-publica", "Environment" = "development" }
@@ -58,7 +58,7 @@ vpcconfig = {
       availability_zone                              = "us-east-1b"
       assign_ipv6_address_on_creation                = false
       availability_zone_id                           = "use1-az2"
-      customer_owned_ipv4_pool                       = null
+      customer_owned_ipv4_pool                       = ""
       enable_dns64                                   = false
       enable_lni_at_device_index                     = null
       enable_resource_name_dns_aaaa_record_on_launch = false
@@ -67,7 +67,7 @@ vpcconfig = {
       ipv6_native                                    = false
       map_customer_owned_ip_on_launch                = false
       map_public_ip_on_launch                        = false
-      outpost_arn                                    = null
+      outpost_arn                                    = ""
       private_dns_hostname_type_on_launch            = "resource-name"
       cidr_block                                     = "10.0.2.0/24"
       tags                                           = { "Name" = "subnet-privada", "Environment" = "development" }
@@ -80,10 +80,13 @@ vpcconfig = {
     {
       route_table_name = "public-route-table"
       propagating_vgws = []
-
+      vpc_name                   = "mi-vpc-ejemplo"
+      tags = {
+        "tag_1" = "ejemplo1"
+        "tag_2" = "ejemplo2"
+      }
       routes = [
         {
-          vpc_name                   = "mi-vpc-ejemplo"
           cidr_block                 = "0.0.0.0/0"
           ipv6_cidr_block            = "::/0"
           destination_prefix_list_id = null
@@ -97,10 +100,6 @@ vpcconfig = {
           transit_gateway_id         = null
           vpc_endpoint_id            = null
           vpc_peering_connection_id  = null
-          tags = {
-            "tag_1" = "ejemplo1"
-            "tag_2" = "ejemplo2"
-          }
         }
       ]
     }
@@ -116,9 +115,9 @@ vpcconfig = {
       connectivity_type                  = "public"
       private_ip                         = null
       subnet_id                          = "subnet-0a1b2c3d4e5f67890"
-      secondary_allocation_ids           = ""
-      secondary_private_ip_address_count = 0
-      secondary_private_ip_addresses     = ""
+      secondary_allocation_ids           = []
+      secondary_private_ip_address_count = null
+      secondary_private_ip_addresses     = []
       tags = {
         "Name"        = "nat_gateway_ejemplo"
         "Environment" = "development"
@@ -131,10 +130,7 @@ vpcconfig = {
   aws_internet_gateway = [
     {
       internet_gtw_name = "internet_gateway_ejemplo"
-      id                = "igw-0a1b2c3d4e5f67890"
-      arn               = "arn:aws:ec2:us-east-1:123456789012:internet-gateway/igw-0a1b2c3d4e5f67890"
-      owner_id          = "123456789012"
-      vpc_id            = "vpc-0a1b2c3d4e5f67890"
+      vpc_name            = "mi-vpc-ejemplo"
       tags              = { "Name" = "internet_gateway_ejemplo", "Environment" = "development" }
     }
   ]
@@ -238,7 +234,7 @@ vpcconfig = {
       encryption_configuration = [
         {
           key_id = "alias/aws/firewall"
-          type   = "CUSTOMER_MANAGED"
+          type   = "CUSTOMER_KMS"
         }
       ]
       firewall_policy_arn               = "arn:aws:network-firewall:us-east-1:123456789012:firewall-policy/firewall-policy-ejemplo"
@@ -250,7 +246,7 @@ vpcconfig = {
       subnet_mapping = [
         {
           subnet_id       = "subnet-0a1b2c3d4e5f67890"
-          ip_address_type = "IPv4"
+          ip_address_type = "IPV4"
         }
       ]
 
@@ -270,14 +266,14 @@ vpcconfig = {
       transit_gtw_name                   = "transit_gateway_ejemplo"
       description                        = "Simple transit gateway"
       amazon_side_asn                    = 64512
-      auto_accept_shared_attachments     = true
-      default_route_table_association    = true
-      default_route_table_propagation    = true
-      dns_support                        = true
-      security_group_referencing_support = false
-      multicast_support                  = false
-      transit_gateway_cidr_blocks        = "10.0.0.0/24"
-      vpn_ecmp_support                   = false
+      auto_accept_shared_attachments     = "enable"
+      default_route_table_association    = "enable"
+      default_route_table_propagation    = "enable"
+      dns_support                        = "enable"
+      security_group_referencing_support = "disable"
+      multicast_support                  = "disable"
+      transit_gateway_cidr_blocks        = ["10.0.0.0/24"]
+      vpn_ecmp_support                   = "disable"
       tags = {
         "Name"        = "transit_gateway_ejemplo",
         "Environment" = "development"
@@ -291,22 +287,22 @@ vpcconfig = {
   aws_security_group = [
     {
       description            = "simple security group"
-      security_group_name    = "security_group_ejemplo"
+      security_group_name    = "security_group_example"
       revoke_rules_on_delete = false
       egress = [{
-        cidr_blocks      = "0.0.0.0/0"
+        cidr_blocks      = ["0.0.0.0/0"]
         from_port        = 0
         to_port          = 0
         protocol         = "-1"
-        description      = "Permitir tráfico HTTP saliente"
+        description      = "Permitir trafico HTTP saliente"
         prefix_list_ids  = ["pl-12345678"]
         security_groups  = ["sg-0a1b2c3d4e5f67890"]
         self             = false
-        ipv6_cidr_blocks = "::/0"
+        ipv6_cidr_blocks = ["::/0"]
         action           = "allow"
       }]
       ingress = [{
-        cidr_blocks      = "0.0.0.0/0"
+        cidr_blocks      = ["0.0.0.0/0"]
         from_port        = 22
         to_port          = 22
         protocol         = "tcp"
@@ -314,10 +310,10 @@ vpcconfig = {
         prefix_list_ids  = []
         security_groups  = ["sg-0a1b2c3d4e5f67890"]
         self             = false
-        ipv6_cidr_blocks = "::/0"
+        ipv6_cidr_blocks = ["::/0"]
         action           = "allow"
       }]
-      name_prefix = "sg-ejemplo-"
+      name_prefix = "ejemplo-"
       vpc_id      = "vpc-0a1b2c3d4e5f67890"
       tags = {
         "Name"        = "security_group_ejemplo",
@@ -357,6 +353,7 @@ vpcconfig = {
           ipv6_cidr_blocks = []
           icmp_type        = 0
           icmp_code        = 0
+          rule_no = 100
         }
       ]
       tags = {
