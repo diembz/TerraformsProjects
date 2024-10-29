@@ -4,7 +4,7 @@ module "ec2-s3" {
   moduleconfig = var.moduleconfig
 }
 */
-module "aws-vpc" {
-  source    = "./modules/aws-vpc"
+module "aws-network" {
+  source    = "./modules/aws-network"
   vpcconfig = var.vpcconfig
 }

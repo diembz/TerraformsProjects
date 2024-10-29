@@ -25,14 +25,13 @@ resource "aws_vpc" "mi_die_vpc" {
 
 }
 
+# SUBNET
 resource "aws_subnet" "mi_die_subnet" {
-  for_each          = { for entry in var.vpcconfig.subnets : entry.subnet_name => entry }
-  vpc_id            = aws_vpc.mi_die_vpc[each.value.vpc_name].id
-  cidr_block        = each.value.cidr_block
-  availability_zone = each.value.availability_zone
-
+  for_each                                       = { for entry in var.vpcconfig.subnets : entry.subnet_name => entry }
+  vpc_id                                         = aws_vpc.mi_die_vpc[each.value.vpc_name].id
+  cidr_block                                     = each.value.cidr_block
+  availability_zone                              = each.value.availability_zone
   assign_ipv6_address_on_creation                = each.value.assign_ipv6_address_on_creation
-  availability_zone_id                           = each.value.availability_zone_id
   customer_owned_ipv4_pool                       = each.value.customer_owned_ipv4_pool
   enable_dns64                                   = each.value.enable_dns64
   enable_lni_at_device_index                     = each.value.enable_lni_at_device_index
@@ -44,10 +43,10 @@ resource "aws_subnet" "mi_die_subnet" {
   map_public_ip_on_launch                        = each.value.map_public_ip_on_launch
   outpost_arn                                    = each.value.outpost_arn
   private_dns_hostname_type_on_launch            = each.value.private_dns_hostname_type_on_launch
-
-  tags = each.value.tags
+  tags                                           = each.value.tags
 }
 
+# ROUTE TABLE
 resource "aws_route_table" "die_route_table" { # Crear una tabla de rutas para controlar el enrutamiento del tráfico en la VPC y asignarle un nombre.
   for_each         = { for entry in var.vpcconfig.route_tables : entry.route_table_name => entry }
   vpc_id           = aws_vpc.mi_die_vpc[each.value.vpc_name].id
@@ -72,12 +71,14 @@ resource "aws_route_table" "die_route_table" { # Crear una tabla de rutas para c
   tags = each.value.tags
 }
 
+# ROUTE TABLE ASSOCIATION
 resource "aws_route_table_association" "mi_route_table_assoc" { # # Asocia cada subnet con la tabla de rutas para definir cómo se enruta el tráfico dentro de cada subnet.
   for_each       = { for entry in var.vpcconfig.table_association : entry.association_name => entry }
   subnet_id      = aws_subnet.mi_die_subnet[each.value.subnet_name].id
   route_table_id = aws_route_table.die_route_table[each.value.route_table_name].id
 }
 
+# NAT GATEWAY
 resource "aws_nat_gateway" "die_nat_gateway" {
   for_each                           = { for entry in var.vpcconfig.aws_nat_gateway : entry.nat_gtw_name => entry }
   allocation_id                      = each.value.allocation_id
@@ -92,12 +93,9 @@ resource "aws_nat_gateway" "die_nat_gateway" {
 
 # Internet Gateway
 resource "aws_internet_gateway" "die_internet_gateway" {
-  for_each = { for entry in var.vpcconfig.aws_internet_gateway : entry.inernet_gtw_name => entry }
+  for_each = { for entry in var.vpcconfig.aws_internet_gateway : entry.internet_gtw_name => entry }
   vpc_id   = aws_vpc.mi_die_vpc[each.value.vpc_name].id #INVESTIGAR
   tags     = each.value.tags
-  id       = each.value.id
-  arn      = each.value.arn
-  owner_id = each.value.owner_id
 }
 
 # Customer Gateway
@@ -134,16 +132,16 @@ resource "aws_networkfirewall_firewall" "die_networkfirewall_firewall" {
   delete_protection = each.value.delete_protection
   description       = each.value.description
   encryption_configuration {
-    type   = each.value.type
-    key_id = each.value.key_id
+    type   = each.value.encryption_configuration.type
+    key_id = each.value.encryption_configuration.key_id
   }
   firewall_policy_arn               = each.value.firewall_policy_arn
   firewall_policy_change_protection = each.value.firewall_policy_change_protection
   name                              = each.value.name
   subnet_change_protection          = each.value.subnet_change_protection
   subnet_mapping {
-    subnet_id       = each.value.subnet_id
-    ip_address_type = each.value.subent_id
+    subnet_id       = each.value.subnet_mapping.subnet_id
+    ip_address_type = each.value.subnet_mapping.subnet_id
   }
   vpc_id = each.value.vpc_id
   tags   = each.value.tags
@@ -220,15 +218,34 @@ resource "aws_vpn_connection" "die_vpn_connection" {
   tags                                 = each.value.tags
 }
 
-
+# Security Group
 resource "aws_security_group" "security_group_example" {
-  for_each               = { for entry in var.vpcconfig.aws_security_group : entry.security_group_name => entry }
-  description            = each.value.description
-  egress                 = each.value.egress
-  ingress                = each.value.ingress
+  for_each    = { for entry in var.vpcconfig.aws_security_group : entry.security_group_name => entry }
+  description = each.value.description
+  egress {
+    cidr_blocks      = each.value.cidr_blocks
+    from_port        = each.value.from_port
+    to_port          = each.value.to_port
+    protocol         = each.value.protocol
+    ipv6_cidr_blocks = each.value.ipv6_cidr_block
+    description      = each.value.description
+    prefix_list_ids  = each.value.prefix_list_ids
+    security_groups  = each.value.security_groups
+    self             = each.value.self
+  }
+  ingress {
+    cidr_blocks      = each.value.cidr_blocks
+    from_port        = each.value.from_port
+    to_port          = each.value.to_port
+    protocol         = each.value.protocol
+    ipv6_cidr_blocks = each.value.ipv6_cidr_block
+    description      = each.value.description
+    prefix_list_ids  = each.value.prefix_list_ids
+    security_groups  = each.value.security_groups
+    self             = each.value.self
+  }
   name_prefix            = each.value.name_prefix
   revoke_rules_on_delete = each.value.revoke_rules_on_delete
-  name                   = each.value.name
   vpc_id                 = each.value.vpc_id
   tags                   = each.value.tags
 }
@@ -239,7 +256,25 @@ resource "aws_network_acl" "die_network_acl" {
   for_each   = { for entry in var.vpcconfig.aws_network_acl : entry.network_acl_name => entry }
   vpc_id     = each.value.vpc_id
   subnet_ids = each.value.subnet_ids
-  ingress    = each.value.ingress
-  egress     = each.value.egress
-  tags       = each.value.tags
+  ingress {
+    cidr_block = each.value.egress.cidr_block
+    from_port  = each.value.egress.from_port
+    to_port    = each.value.egress.to_port
+    protocol   = each.value.egress.protocol
+    action     = each.value.egress.action
+    icmp_type  = each.value.egress.icmp_type
+    icmp_code  = each.value.egress.icmp_code
+    rule_no    = each.value.egress.rule_no
+  }
+  egress {
+    cidr_block = each.value.egress.cidr_block
+    from_port  = each.value.egress.from_port
+    to_port    = each.value.egress.to_port
+    protocol   = each.value.egress.protocol
+    action     = each.value.egress.action
+    icmp_type  = each.value.egress.icmp_type
+    icmp_code  = each.value.egress.icmp_code
+    rule_no    = each.value.egress.rule_no
+  }
+  tags = each.value.tags
 }

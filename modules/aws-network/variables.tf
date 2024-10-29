@@ -18,13 +18,13 @@ variable "vpcconfig" {
       assign_generated_ipv6_cidr_block     = bool
       tags                                 = map(string)
     }))
+
     # Subnet configuration
     subnets = list(object({
       vpc_name                                       = string
       subnet_name                                    = string
       availability_zone                              = string
       assign_ipv6_address_on_creation                = bool
-      availability_zone_id                           = string
       customer_owned_ipv4_pool                       = string
       enable_dns64                                   = bool
       enable_lni_at_device_index                     = string
@@ -59,6 +59,7 @@ variable "vpcconfig" {
         transit_gateway_id         = string
         vpc_endpoint_id            = string
         vpc_peering_connection_id  = string
+        tags                       = map(string)
       }))
     }))
 
@@ -86,10 +87,6 @@ variable "vpcconfig" {
     # Internet_gateway
     aws_internet_gateway = list(object({
       internet_gtw_name = string
-      id                = string
-      arn               = string
-      owner_id          = string
-      vpc_id            = string
       tags              = map(string)
     }))
 
@@ -123,17 +120,23 @@ variable "vpcconfig" {
 
     # Network Firewall
     aws_networkfirewall_firewall = list(object({
-      networkfirewall_name              = string
-      delete_protection                 = bool
-      description                       = string
-      encryption_configuration          = map(any)
+      networkfirewall_name = string
+      delete_protection    = bool
+      description          = string
+      encryption_configuration = list(object({
+        type   = string
+        key_id = string
+      }))
       firewall_policy_arn               = string
       firewall_policy_change_protection = bool
       name                              = string
       subnet_change_protection          = bool
-      subnet_mapping                    = map(any)
-      vpc_id                            = string
-      tags                              = map(any)
+      subnet_mapping = list(object({
+        subnet_id       = string
+        ip_address_type = string
+      }))
+      vpc_id = string
+      tags   = map(any)
     }))
 
     # VPN connection
@@ -172,7 +175,6 @@ variable "vpcconfig" {
       log_enabled_2                           = bool
       log_group_arn_2                         = string
       log_output_format_2                     = string
-      tunnel2_log_options                     = map(any)
       tunnel1_phase1_dh_group_numbers         = list(number)
       tunnel2_phase1_dh_group_numbers         = list(number)
       tunnel1_phase1_encryption_algorithms    = list(string)
@@ -197,32 +199,71 @@ variable "vpcconfig" {
       tunnel2_replay_window_size              = number
       tunnel1_startup_action                  = string
       tunnel2_startup_action                  = string
+      tags                                    = map(string)
     }))
 
     # Security Group
     aws_security_group = list(object({
-      description         = string
-      name_prefix         = string
-      security_group_name = string
-      egress              = map(any)
-      ingress             = map(any)
-      vpc_id              = string
-      tags                = map(string)
+      description            = string
+      name_prefix            = string
+      security_group_name    = string
+      revoke_rules_on_delete = bool
+      egress = list(object({
+        cidr_blocks      = string
+        from_port        = number
+        to_port          = number
+        protocol         = string
+        ipv6_cidr_blocks = string
+        description      = string
+        prefix_list_ids  = list(string)
+        security_groups  = list(string)
+        self             = bool
+      }))
+      ingress = list(object({
+        cidr_blocks      = string
+        from_port        = number
+        to_port          = number
+        protocol         = string
+        ipv6_cidr_blocks = string
+        description      = string
+        prefix_list_ids  = list(string)
+        security_groups  = list(string)
+        self             = bool
+      }))
+      vpc_id = string
+      tags   = map(string)
     }))
+
 
     # ACL
     aws_network_acl = list(object({
       network_acl_name = string
       vpc_id           = string
-      subnet_ids       = string
-      ingress          = string
-      tags             = map(string)
-      egress           = map(any)
-      ingress          = map(any)
+      subnet_ids       = list(string)
+      egress = list(object({
+        cidr_block       = string
+        from_port        = number
+        to_port          = number
+        protocol         = string
+        action           = string
+        ipv6_cidr_blocks = list(string)
+        icmp_type        = number
+        icmp_code        = number
+        rule_no          = number
+      }))
+      ingress = list(object({
+        cidr_block       = string
+        from_port        = number
+        to_port          = number
+        protocol         = string
+        action           = string
+        ipv6_cidr_blocks = list(string)
+      }))
+      tags = map(string)
     }))
-
   })
 }
+
 
 
 
