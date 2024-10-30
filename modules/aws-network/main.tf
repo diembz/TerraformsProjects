@@ -52,20 +52,24 @@ resource "aws_route_table" "die_route_table" { # Crear una tabla de rutas para c
   vpc_id           = aws_vpc.mi_die_vpc[each.value.vpc_name].id
   propagating_vgws = each.value.propagating_vgws # Opcional: Virtual gateways para propagación
 
-  route {
-    cidr_block                 = each.value.routes[0].cidr_block
-    ipv6_cidr_block            = each.value.routes[0].ipv6_cidr_block
-    destination_prefix_list_id = each.value.routes[0].destination_prefix_list_id
-    carrier_gateway_id         = each.value.routes[0].carrier_gateway_id
-    core_network_arn           = each.value.routes[0].core_network_arn
-    egress_only_gateway_id     = each.value.routes[0].egress_only_gateway_id
-    gateway_id                 = each.value.routes[0].gateway_id
-    local_gateway_id           = each.value.routes[0].local_gateway_id
-    nat_gateway_id             = each.value.routes[0].nat_gateway_id
-    network_interface_id       = each.value.routes[0].network_interface_id
-    transit_gateway_id         = each.value.routes[0].transit_gateway_id
-    vpc_endpoint_id            = each.value.routes[0].vpc_endpoint_id
-    vpc_peering_connection_id  = each.value.routes[0].vpc_peering_connection_id
+  dynamic "route" {
+    for_each = each.value.routes
+
+    content {
+    cidr_block                 = route.value.cidr_block
+    ipv6_cidr_block            = route.value.ipv6_cidr_block
+    destination_prefix_list_id = route.value.destination_prefix_list_id
+    carrier_gateway_id         = route.value.carrier_gateway_id
+    core_network_arn           = route.value.core_network_arn
+    egress_only_gateway_id     = route.value.egress_only_gateway_id
+    gateway_id                 = route.value.gateway_id
+    local_gateway_id           = route.value.local_gateway_id
+    nat_gateway_id             = route.value.nat_gateway_id
+    network_interface_id       = route.value.network_interface_id
+    transit_gateway_id         = route.value.transit_gateway_id
+    vpc_endpoint_id            = route.value.vpc_endpoint_id
+    vpc_peering_connection_id  = route.value.vpc_peering_connection_id     
+    }
   }
 
   tags = each.value.tags
@@ -131,18 +135,27 @@ resource "aws_networkfirewall_firewall" "die_networkfirewall_firewall" {
   for_each          = { for entry in var.vpcconfig.aws_networkfirewall_firewall : entry.networkfirewall_name => entry }
   delete_protection = each.value.delete_protection
   description       = each.value.description
-  encryption_configuration {
-    type   = each.value.encryption_configuration[0].type
-    key_id = each.value.encryption_configuration[0].key_id
+
+dynamic "encryption_configuration" {
+  for_each = each.value.encryption_configuration
+  content {
+    type   = encryption_configuration.value.type
+    key_id = encryption_configuration.value.key_id
   }
+}
   firewall_policy_arn               = each.value.firewall_policy_arn
   firewall_policy_change_protection = each.value.firewall_policy_change_protection
   name                              = each.value.name
   subnet_change_protection          = each.value.subnet_change_protection
-  subnet_mapping {
-    subnet_id       = each.value.subnet_mapping[0].subnet_id
-    ip_address_type = each.value.subnet_mapping[0].ip_address_type
+
+  dynamic "subnet_mapping" {
+    for_each = each.value.subnet_mapping
+    content {
+    subnet_id       = subnet_mapping.value.subnet_id
+    ip_address_type = subnet_mapping.value.ip_address_type      
+    }
   }
+
   vpc_id = each.value.vpc_id
   tags   = each.value.tags
 }
@@ -222,28 +235,36 @@ resource "aws_vpn_connection" "die_vpn_connection" {
 resource "aws_security_group" "security_group_example" {
   for_each    = { for entry in var.vpcconfig.aws_security_group : entry.security_group_name => entry }
   description = each.value.description
-  egress {
-    cidr_blocks      = each.value.egress[0].cidr_blocks
-    from_port        = each.value.egress[0].from_port
-    to_port          = each.value.egress[0].to_port
-    protocol         = each.value.egress[0].protocol
-    ipv6_cidr_blocks = each.value.egress[0].ipv6_cidr_blocks
-    description      = each.value.egress[0].description
-    prefix_list_ids  = each.value.egress[0].prefix_list_ids
-    security_groups  = each.value.egress[0].security_groups
-    self             = each.value.egress[0].self
+
+  dynamic "egress" {
+    for_each = each.value.egress
+    content {
+    cidr_blocks      = egress.value.cidr_blocks
+    from_port        = egress.value.from_port
+    to_port          = egress.value.to_port
+    protocol         = egress.value.protocol
+    ipv6_cidr_blocks = egress.value.ipv6_cidr_blocks
+    description      = egress.value.description
+    prefix_list_ids  = egress.value.prefix_list_ids
+    security_groups  = egress.value.security_groups
+    self             = egress.value.self      
+    }
   }
-  ingress {
-    cidr_blocks      = each.value.ingress[0].cidr_blocks
-    from_port        = each.value.ingress[0].from_port
-    to_port          = each.value.ingress[0].to_port
-    protocol         = each.value.ingress[0].protocol
-    ipv6_cidr_blocks = each.value.ingress[0].ipv6_cidr_blocks
-    description      = each.value.ingress[0].description
-    prefix_list_ids  = each.value.ingress[0].prefix_list_ids
-    security_groups  = each.value.ingress[0].security_groups
-    self             = each.value.ingress[0].self
-  }
+
+ dynamic "ingress" {
+   for_each = each.value.ingress
+   content {
+    cidr_blocks      = ingress.value.cidr_blocks
+    from_port        = ingress.value.from_port
+    to_port          = ingress.value.to_port
+    protocol         = ingress.value.protocol
+    ipv6_cidr_blocks = ingress.value.ipv6_cidr_blocks
+    description      = ingress.value.description
+    prefix_list_ids  = ingress.value.prefix_list_ids
+    security_groups  = ingress.value.security_groups
+    self             = ingress.value.self     
+   }
+ }
   name_prefix            = each.value.name_prefix
   revoke_rules_on_delete = each.value.revoke_rules_on_delete
   vpc_id                 = each.value.vpc_id
@@ -256,25 +277,34 @@ resource "aws_network_acl" "die_network_acl" {
   for_each   = { for entry in var.vpcconfig.aws_network_acl : entry.network_acl_name => entry }
   vpc_id     = each.value.vpc_id
   subnet_ids = each.value.subnet_ids
-  ingress {
-    cidr_block = each.value.ingress[0].cidr_block
-    from_port  = each.value.ingress[0].from_port
-    to_port    = each.value.ingress[0].to_port
-    protocol   = each.value.ingress[0].protocol
-    action     = each.value.ingress[0].action
-    icmp_type  = each.value.ingress[0].icmp_type
-    icmp_code  = each.value.ingress[0].icmp_code
-    rule_no    = each.value.ingress[0].rule_no
+
+  dynamic "ingress" {
+    for_each = each.value.ingress
+    content {
+    cidr_block = ingress.value.cidr_block
+    from_port  = ingress.value.from_port
+    to_port    = ingress.value.to_port
+    protocol   = ingress.value.protocol
+    action     = ingress.value.action
+    icmp_type  = ingress.value.icmp_type
+    icmp_code  = ingress.value.icmp_code
+    rule_no    = ingress.value.rule_no      
+    }
   }
-  egress {
-    cidr_block = each.value.egress[0].cidr_block
-    from_port  = each.value.egress[0].from_port
-    to_port    = each.value.egress[0].to_port
-    protocol   = each.value.egress[0].protocol
-    action     = each.value.egress[0].action
-    icmp_type  = each.value.egress[0].icmp_type
-    icmp_code  = each.value.egress[0].icmp_code
-    rule_no    = each.value.egress[0].rule_no
+
+  dynamic "egress" {
+    for_each = each.value.egress
+    content {
+    cidr_block = egress.value.cidr_block
+    from_port  = egress.value.from_port
+    to_port    = egress.value.to_port
+    protocol   = egress.value.protocol
+    action     = egress.value.action
+    icmp_type  = egress.value.icmp_type
+    icmp_code  = egress.value.icmp_code
+    rule_no    = egress.value.rule_no      
+    }
   }
+
   tags = each.value.tags
 }
